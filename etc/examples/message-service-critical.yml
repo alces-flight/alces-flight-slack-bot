@@ -1,0 +1,7 @@
+---
+type: nagios
+hostname: login1.pri.demo
+servicedesc: Things
+servicestate: CRITICAL
+notificationtype: PROBLEM
+serviceoutput: things look really bad

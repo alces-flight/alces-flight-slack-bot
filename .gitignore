@@ -1,0 +1,6 @@
+etc/config.yml
+vendor
+bin/*
+!bin/*.rb
+tmp
+.bundle

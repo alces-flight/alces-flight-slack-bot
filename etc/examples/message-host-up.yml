@@ -1,0 +1,6 @@
+---
+type: nagios
+hostname: login1.pri.demo
+hoststate: UP
+notificationtype: RECOVERY
+hostoutput: packets all found

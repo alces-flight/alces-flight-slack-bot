@@ -1,0 +1,6 @@
+---
+type: nagios
+hostname: login1.pri.demo
+hoststate: DOWN
+notificationtype: PROBLEM
+hostoutput: packets all lost

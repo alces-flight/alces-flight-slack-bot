@@ -1,0 +1,7 @@
+---
+type: nagios
+hostname: login1.pri.demo
+servicedesc: Things
+servicestate: OK
+notificationtype: RECOVERY
+serviceoutput: things look good again

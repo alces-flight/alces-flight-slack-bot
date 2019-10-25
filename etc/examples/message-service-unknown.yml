@@ -1,0 +1,7 @@
+---
+type: nagios
+hostname: login1.pri.demo
+servicedesc: Things
+servicestate: UNKNOWN
+notificationtype: PROBLEM
+serviceoutput: not sure

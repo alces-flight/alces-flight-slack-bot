@@ -1,0 +1,14 @@
+[Unit]
+Description=Flight Slack Bot
+Requires=network.target
+
+[Service]
+Type=forking
+#User=nobody
+WorkingDirectory=/opt/flight-slack-bot
+PIDFile=/run/flight-slack-bot.pid
+Environment="SLACK_API_TOKEN=IN HERE"
+ExecStart=/opt/flight-slack-bot/bin/rackup -D -p 9292 -E production -P /run/flight-slack-bot.pid
+
+[Install]
+WantedBy=multi-user.target

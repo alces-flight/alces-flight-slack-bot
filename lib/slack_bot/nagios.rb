@@ -25,8 +25,8 @@
 # For more information on Flight Slack Bot, please visit:
 # https://github.com/alces-flight/flight-slack-bot
 #==============================================================================
-require_relative 'slack'
-require_relative 'config'
+require_relative 'nagios/poster'
+require_relative 'nagios/state'
 
 module SlackBot
   class Nagios
@@ -109,8 +109,7 @@ module SlackBot
 
     def statement
       {
-        type: @type,
-        state: @state,
+        state: State.new(@type, @state),
         output: @output,
       }.tap do |h|
         if @desc
@@ -137,130 +136,6 @@ module SlackBot
         end
       else
         raise "Neither host nor service message"
-      end
-    end
-
-    class Poster
-      class << self
-        def clusters
-          YAML.load_file(File.expand_path(File.join(__FILE__,'..','..','..','etc','clusters.yml')))
-        end
-      end
-
-      attr_reader :cluster
-
-      def initialize(cluster)
-        @cluster = cluster
-        @backoff = Config.backoff.to_i
-        @statements = []
-      end
-
-      def add(statement)
-        @statements << statement
-        if @poster_thread.nil? || !@poster_thread.alive?
-          @poster_thread = create_poster_thread
-        elsif @backoff < Config.max_backoff.to_i && @poster_thread.alive?
-          @backoff += Config.backoff.to_i
-          @poster_thread.kill
-          @poster_thread = create_poster_thread
-        end
-      end
-
-      private
-      def create_poster_thread
-        Thread.new do
-          sleep @backoff
-          Slack.client.chat_postMessage(
-            channel: Config.channel,
-            attachments: create_attachments,
-            as_user: false,
-            icon_emoji: cluster_emoji,
-            username: cluster_name,
-          )
-          @statements.clear
-          @backoff = 5
-        end
-      end
-
-      def create_attachments
-        {}.tap do |h|
-          @statements.each do |s|
-            c = color_for(s[:type], s[:state])
-            a = h[c]
-            if a.nil?
-              a = h[c] = {
-                fallback: "",
-                color: c,
-                text: "",
-                mrkdwn_in: ["text"]
-              }
-            end
-            a[:text] << text_for(s[:subject], s[:state])
-            unless s[:output].nil? || s[:output] == ""
-              a[:text] << " (_#{s[:output]}_)"
-            end
-            a[:text] << "\n"
-          end
-        end.values.each do |a|
-          a[:text] = "*<#{cluster_link}|##{cluster}>*\n#{a[:text]}"
-          a[:fallback] = a[:text]
-        end
-      end
-
-      def cluster_name
-        @cluster_name ||=
-          Config.clusters[cluster] && Config.clusters[cluster]['name'] ||
-          cluster
-      end
-
-      def cluster_emoji
-        @cluster_emoji ||=
-          Config.clusters[cluster] && Config.clusters[cluster]['emoji'] ||
-          ':computer:'
-      end
-
-      def text_for(subject, state)
-        "#{subject} is *#{state}* #{icon_for(state)}"
-      end
-
-      def cluster_link
-        "https://flightcenter-nagios2.flightcenter.alces-flight.com/nagios/cgi-bin/status.cgi?hostgroup=#{cluster}&style=detail"
-      end
-
-      def icon_for(state)
-        case state
-        when 'OK'
-          '💚'
-        when 'WARNING'
-          '🔶'
-        when 'CRITICAL'
-          '🔴'
-        when 'UNKNOWN'
-          '❓'
-        when 'UP'
-          '⬆️'
-        when 'DOWN'
-          '⬇️'
-        when 'UNREACHABLE'
-          '❗'
-        end
-      end
-
-      def color_for(type, state)
-        case type
-        when "PROBLEM", "FLAPPINGSTART"
-          if state == 'UNKNOWN'
-            '#666666'
-          elsif state == 'WARNING'
-            '#ff9900'
-          else
-            '#ff0000'
-          end
-        when "FLAPPINGDISABLED", "DOWNTIMESTART"
-          '#ff9900'
-        when "RECOVERY", "ACKNOWLEDGEMENT", "FLAPPINGSTOP", "DOWNTIMEEND", "DOWNTIMECANCELLED"
-          '#00ff00'
-        end
       end
     end
   end

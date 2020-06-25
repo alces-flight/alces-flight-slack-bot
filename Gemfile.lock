@@ -18,7 +18,7 @@ GEM
       concurrent-ruby (~> 1.0)
     minitest (5.12.2)
     multipart-post (2.1.1)
-    rack (2.0.7)
+    rack (2.2.3)
     rack-app (7.5.2)
       rack
     rack-app-front_end (0.22.0)
